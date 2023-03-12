@@ -1,3 +1,8 @@
 data_raw/*
 data_unziped/*
 __pycache__
+/BiLSTM_example.py
+/CNN_example.py
+/try.mc
+/try.ogg
+/try1.mc
