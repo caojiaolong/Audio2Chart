@@ -7,9 +7,18 @@ this file is used to:
 for example: to get a sample from data.json, we can use `data[index]["input"]` and `data[index]["label"]`
 """
 import torch.utils.data
+import pickle
 
 
-class dataset(torch.utils.data.Dataset):
-    def __init__(self, train=True):
-        super(dataset, self).__init__()
-        self.train = train
+class Dataset(torch.utils.data.IterableDataset):
+    def __init__(self, path):
+        super(Dataset, self).__init__()
+        with open(path, "rb") as f:
+            data = pickle.load(f)
+        self.data = data
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data.keys())

@@ -104,7 +104,6 @@ for index in range(num_data):
     data[index] = data_temp
     counter = counter + 1
 
-print(data[0])
 
 # save data as data.json
 output = open("data.pkl", "wb")
