@@ -1,6 +1,6 @@
-'''
+"""
 this file is used to infer
-'''
+"""
 from model import *
 
 

@@ -7,3 +7,5 @@ __pycache__
 /try.ogg
 /try1.mc
 data/*
+/data.pkl
+/try.py

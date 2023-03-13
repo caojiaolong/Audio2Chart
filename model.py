@@ -1,6 +1,6 @@
-'''
+"""
 this file is used to implement the model.
-'''
+"""
 import torch
 import torch.nn as nn
 
@@ -25,6 +25,7 @@ class ChartNet(nn.Module):
         self.fc1 = nn.Linear(in_features=600, out_features=fc_feature)
         self.relu3 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(in_features=fc_feature, out_features=audio_feature)
+        self.dropout1 = nn.Dropout(p=0.2)
 
         # Define the BiLSTM layer
         # input: [beat_num, audio_feature], output: [1, output_dim]
@@ -48,5 +49,6 @@ class ChartNet(nn.Module):
         x = self.fc1(x)
         x = self.relu3(x)
         x = self.fc2(x)
+        x = self.dropout1(x)
         output, _ = self.bilstm(x)
         return self.fc(output)
