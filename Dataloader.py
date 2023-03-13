@@ -9,16 +9,18 @@ for example: to get a sample from data.json, we can use `data[index]["input"]` a
 import torch.utils.data
 import pickle
 
+from torch.utils.data.dataset import T_co
 
-class Dataset(torch.utils.data.IterableDataset):
+
+class Dataset(torch.utils.data.Dataset):
     def __init__(self, path):
         super(Dataset, self).__init__()
         with open(path, "rb") as f:
             data = pickle.load(f)
         self.data = data
 
-    def __iter__(self):
-        return iter(self.data)
+    def __getitem__(self, index):
+        return self.data[list(self.data.keys())[index]]
 
     def __len__(self):
         return len(self.data.keys())
