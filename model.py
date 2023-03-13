@@ -6,7 +6,7 @@ import torch.nn as nn
 
 
 class ChartNet(nn.Module):
-    def __init__(self, fc_feature, audio_feature, hidden_dim, output_dim):
+    def __init__(self, fc_feature, audio_feature, hidden_dim,num_layers, output_dim):
         super(ChartNet, self).__init__()
 
         # Define the dimensions of the layers
@@ -16,20 +16,20 @@ class ChartNet(nn.Module):
 
         # Define the CNN layer
         # input: [beat_num, 1, 128, 87], output: [beat_num, audio_feature]
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, stride=1)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=3, kernel_size=3, stride=1)
         self.relu1 = nn.ReLU(inplace=True)
-        self.pool1 = nn.AvgPool2d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, stride=1)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(in_channels=3, out_channels=1, kernel_size=3, stride=1)
         self.relu2 = nn.ReLU(inplace=True)
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
         self.fc1 = nn.Linear(in_features=600, out_features=fc_feature)
         self.relu3 = nn.ReLU(inplace=True)
         self.fc2 = nn.Linear(in_features=fc_feature, out_features=audio_feature)
-        self.dropout1 = nn.Dropout(p=0.2)
+        self.dropout1 = nn.Dropout(p=0.1)
 
         # Define the BiLSTM layer
         # input: [beat_num, audio_feature], output: [1, output_dim]
-        self.bilstm = nn.LSTM(audio_feature, hidden_dim, bidirectional=True)
+        self.bilstm = nn.LSTM(audio_feature, hidden_dim,num_layers, bidirectional=True)
 
         # Define the output layer
         # Multiply by 2 to account for both forward and backward LSTM
@@ -39,6 +39,7 @@ class ChartNet(nn.Module):
         # the shape of x should be [beat_num, 1, 128, 87]
         # beat_num is number of the beats, 1 means only one channel in MFCC,
         # 128 means n_mel, 87 means the number of columns in 2 seconds in MFCC
+        x = torch.squeeze(x, 0)
         x = self.conv1(x)
         x = self.relu1(x)
         x = self.pool1(x)
