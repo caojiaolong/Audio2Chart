@@ -12,7 +12,7 @@ from model import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ChartNet(600, 500, 512, 2, 256).to(device)
 model.eval()
-# model.load_state_dict(torch.load('checkpoints/a.pth', map_location=device))
+model.load_state_dict(torch.load('checkpoints/c.pth', map_location=device))
 
 
 audio_path = "Song.ogg"
@@ -36,7 +36,7 @@ period = 60 / (bpm * 4)
 
 # convert mel spectrogram into data_temp
 # copied from preprocessing.py
-data_temp = {"input": torch.zeros([beat_num, 1, 128, 87])}
+data_temp = {"input": torch.zeros([beat_num, 1, 128, 87],device=device)}
 for i in range(beat_num):
     time_now = offset / 1000 + period * i
     frame_now = librosa.time_to_frames(times=time_now, sr=sr, hop_length=hop_length)
@@ -50,10 +50,11 @@ for i in range(beat_num):
     else:
         data_temp["input"][i][0] = mel_spectrogram[:, frame_now - 43: frame_now + 43 + 1]
 
+# torch.set_printoptions(profile="full")
+# print(data_temp["input"].shape)
 outputs = model(data_temp["input"])
 outputs = torch.argmax(outputs, dim=1)
-torch.set_printoptions(profile="full")
-print(outputs.shape)
+
 
 
 # define the chart

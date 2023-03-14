@@ -9,10 +9,22 @@ train_set, test_set = random_split(data_set, [train_len, len(data_set) - train_l
 train_loader = DataLoader(train_set, batch_size=1, shuffle=True)
 test_loader = DataLoader(test_set, batch_size=1, shuffle=False)
 
-# define training options
+# compute proper weight in CrossEntropyLoss
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+freq=torch.zeros([256],device=device)
+for i in range(len(data_set)):
+    label = data_set[i]["label"]
+    label =torch.argmax(label,dim=1)
+    for j in label:
+        freq[int(j)]+=1
+weight=torch.reciprocal(freq)
+weight=torch.where(torch.isinf(weight),torch.full_like(weight,1),weight)
+weight=weight/weight.sum()
+
+# define training options
 model = ChartNet(600, 500, 512, 2, 256).to(device)
-loss = nn.CrossEntropyLoss()
+
+loss = nn.CrossEntropyLoss(weight=weight)
 # optim = torch.optim.Adam(model.parameters(), lr=0.005)
 optim = torch.optim.SGD(model.parameters(), lr=0.01)
 model.to(device)
@@ -35,7 +47,7 @@ for epoch in range(10):
     print(f"epoch: {epoch}, avarage loss: {running_loss/index}")
 
 # save model
-torch.save(model.state_dict(), "checkpoints/a.pth")
+torch.save(model.state_dict(), "checkpoints/c.pth")
 
 model.eval()
 acc = torch.tensor([0.0], device=device)
