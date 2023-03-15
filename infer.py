@@ -12,7 +12,7 @@ from model import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ChartNet(600, 500, 512, 2, 16).to(device)
 model.eval()
-model.load_state_dict(torch.load('checkpoints/e_9.pth', map_location=device))
+model.load_state_dict(torch.load('checkpoints/e_10.pth', map_location=device))
 
 
 audio_path = "canon.flac"
