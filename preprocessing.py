@@ -45,11 +45,13 @@ for index in range(num_data):
         print(f"fail, skip index: {index}")
         continue
     hop_length = 512
-    mel_spectrogram = librosa.feature.melspectrogram(y=y, sr=sr, hop_length=hop_length)
+    mel_spectrogram = librosa.feature.melspectrogram(
+        y=y, sr=sr, hop_length=hop_length)
     mel_spectrogram = torch.tensor(mel_spectrogram)
 
     # read the chart file, get bpm and offset
-    chart = open(path_data + "/" + str(index) + "/" + chart, "r", encoding="utf-8")
+    chart = open(path_data + "/" + str(index) +
+                 "/" + chart, "r", encoding="utf-8")
     chart = json.load(chart)
     bpm = chart["time"][0]["bpm"]
     offset = chart["note"][-1].get("offset", 0)
@@ -69,17 +71,19 @@ for index in range(num_data):
     # convert mel spectrogram into data_temp
     data_temp = {"input": torch.zeros([beat_num, 1, 128, 87])}
     for i in range(beat_num):
-        time_now = offset / 1000 + period * i
-        frame_now = librosa.time_to_frames(times=time_now, sr=sr, hop_length=hop_length)
+        time_now = -offset / 1000 + period * i
+        frame_now = librosa.time_to_frames(
+            times=time_now, sr=sr, hop_length=hop_length)
         if frame_now - 43 < 0:
             data_temp["input"][i][0] = torch.cat(
-                (torch.zeros([128, 43 - frame_now]), mel_spectrogram[:, 0: frame_now + 43 + 1]), dim=1)
+                (torch.zeros([128, 87 - mel_spectrogram[:, 0: max(frame_now + 43 + 1, 0)].shape[1]]), mel_spectrogram[:, 0: max(frame_now + 43 + 1, 0)]), dim=1)
         elif frame_now + 43 > mel_spectrogram.shape[1] - 1:
             data_temp["input"][i][0] = torch.cat(
                 (mel_spectrogram[:, frame_now - 43:],
                  torch.zeros([128, 87 - mel_spectrogram[:, frame_now - 43:].shape[1]])), dim=1)
         else:
-            data_temp["input"][i][0] = mel_spectrogram[:, frame_now - 43: frame_now + 43 + 1]
+            data_temp["input"][i][0] = mel_spectrogram[:,
+                                                       frame_now - 43: frame_now + 43 + 1]
 
     # convert chart into data_temp
     # chart_temp is a simulation of chart, the 4 columns represent the 4 Keys in game
@@ -87,7 +91,7 @@ for index in range(num_data):
     # 1 for note
     # 2 for long note start
     # 3 for long note end
-    data_temp["label"] = torch.zeros([beat_num, 256])
+    data_temp["label"] = torch.zeros([beat_num, 4])
     chart_temp = torch.zeros(beat_num, 4)
     for note in chart["note"]:
         if "sound" not in note:
@@ -97,8 +101,10 @@ for index in range(num_data):
             else:
                 chart_temp[note2beatindex(note["beat"]), note["column"]] = 1
     for i in range(beat_num):
-        temp_index = chart_temp[i][0] * 1 + chart_temp[i][1] * 4 + chart_temp[i][2] * 16 + chart_temp[i][3] * 64
-        data_temp["label"][i][int(temp_index)] = 1
+        # temp_index = chart_temp[i][0] * 1 + chart_temp[i][1] * 4 + chart_temp[i][2] * 16 + chart_temp[i][3] * 64
+        # data_temp["label"][i][int(temp_index)] = 1
+        for j in range(4):
+            data_temp["label"][i][j] = int(chart_temp[i][j])
 
     # embed data_temp into data
     data[index] = data_temp
