@@ -8,3 +8,15 @@ data/*
 /data.pkl
 /try.py
 AIchart.mc
+checkpoints/e_0.pth
+checkpoints/e_1.pth
+checkpoints/e_2.pth
+checkpoints/e_3.pth
+checkpoints/e_4.pth
+checkpoints/e_5.pth
+checkpoints/e_6.pth
+checkpoints/e_7.pth
+checkpoints/e_8.pth
+checkpoints/e_9.pth
+checkpoints/e.pth
+checkpoints/d.pth
