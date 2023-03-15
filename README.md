@@ -1,18 +1,38 @@
 # Audio2Chart
 
 ## Description
-this repository is used for restore my final homework in AI class, I tried to implement a ANN for converting any audio into a playable rhythm action games chart.
+This repository is used to restore my final homework in AI class, I tried to implement a neural network for converting any audio into a playable 4 Keys Malody chart (Malody is a rhythm action game).
 
 ## Network Architecture
 
-the overall architecture of the ann consists of two nets:
+The overall architecture of the ann consists of two nets:
 
 1. CNN for analysing audio feature
 2. Bi-LSTM for generating charts
 
 ## Usage
 
-## File
+### For preprocessing data: 
+
+Put all of the chart file like `***.mcz` in a folder named "data_raw", and run `python unzip.py`, then run `python datafilter.py`, we will get two folders named `data_unziped` and `data`. Above all aims to get the train data and corresponding labels. At last, run `python preprocessing.py` to get a file named `data.pkl` to save matrixing data. 
+
+### For training model from scratch or continuing training: 
+
+Just modify `train.py` and change the path of pretrained model. 
+
+### For inference:
+
+Run `python infer.py audio_path [-m model_path]`
+
+The generated chart will be at the root of this file
+
+## File Structure
+
+`checkpoints`: for saving trained model
+
+`data_raw`: original data, download from [malody_official_chart](https://cbo17ty22x.feishu.cn/wiki/wikcncFuigGA1V7C9ffxcnWHSvd)
+
+`data`, `data_unzip`, `data.pkl`: for preprocessing data
 
 `model.py`: model file
 

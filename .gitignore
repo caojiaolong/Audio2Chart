@@ -6,7 +6,6 @@ __pycache__
 /try1.mc
 data/*
 /data.pkl
-/try.py
 AIchart.mc
 checkpoints/e_0.pth
 checkpoints/e_1.pth

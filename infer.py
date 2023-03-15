@@ -1,10 +1,20 @@
 """
 this file is used to infer and converts inference result into a playable chart
+usage:
+python infer.py audio_path [-m model_path]
 """
+import os
+import zipfile
 import torch
 import librosa.feature
 import json
+import argparse
 from model import *
+
+parser = argparse.ArgumentParser()
+parser.add_argument("audio_path")
+parser.add_argument("-m", "--model", help="path of model")
+args = parser.parse_args()
 
 # Create an radom model or load from trained model
 # model = ChartNet(20, 20, 200, 512)
@@ -12,23 +22,26 @@ from model import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ChartNet(600, 500, 512, 2, 16).to(device)
 model.eval()
-model.load_state_dict(torch.load('checkpoints/e_9.pth', map_location=device))
+if args.model:
+    model.load_state_dict(torch.load(args.m, map_location=device))
+else:
+    model.load_state_dict(torch.load(
+        'checkpoints/e_9.pth', map_location=device))
 
 
-audio_path = "Mujinku.ogg"
+audio_path = args.audio_path
 # read the audio and compute the mel spectrogram
 try:
     y, sr = librosa.load(audio_path)
 except BaseException:
     print("audio load fail")
-print(sr)
 hop_length = 512
 mel_spectrogram = librosa.feature.melspectrogram(
     y=y, sr=sr, hop_length=hop_length)
 mel_spectrogram = torch.tensor(mel_spectrogram)
 bpm, beat = librosa.beat.beat_track(
     y=y, sr=sr, hop_length=hop_length, units="time")
-offset = offset = (-beat[0] * 1000) % (60/bpm*1000)
+offset = offset = (-beat[0] * 1000) % (60 / bpm * 1000)
 
 # compute the number of possible beats, every beat is divided into 4 sections
 audio_length = len(y) / sr + offset / 1000
@@ -55,39 +68,26 @@ for i in range(beat_num):
                                                    frame_now - 43: frame_now + 43 + 1]
 
 
-# print(data_temp["input"].shape)
 outputs = model(data_temp["input"])
-outputs=torch.reshape(outputs,[-1,4,4])
-print(outputs.shape)
-# outputs = torch.argmax(outputs, dim=1)
+outputs = torch.reshape(outputs, [-1, 4, 4])
 
 
 # define the chart
 chart = {}
-chart["meta"] = {"version": "AI generated",
-                 "mode": 0, "mode_ext": {"column": 4}}
+chart["meta"] = {"version": "AI generated", "mode": 0, "mode_ext": {"column": 4}, "song": {"title": os.path.splitext(args.audio_path)[-2]}}
 chart["time"] = [{"beat": [0, 0, 1], "bpm": bpm}]
 chart["note"] = []
 
 chart_temp = torch.zeros(beat_num, 4)
 for i in range(beat_num):
-    # chart_temp[i][0] = int(outputs[i] / 1) % 4
-    # chart_temp[i][1] = int(outputs[i] / 4) % 4
-    # chart_temp[i][2] = int(outputs[i] / 16) % 4
-    # chart_temp[i][3] = int(outputs[i] / 64) % 4
-    p=torch.softmax(outputs[i],dim=0)
-    p[0]=p[0]*1.6
-    p[2]=p[2]*30
-    p[3]=p[3]*30
-    p=p/p.sum(dim=0)
-    p=torch.where(p>0.85,torch.full_like(p,1000),p)
-    if i==0:print(p)
+    p = torch.softmax(outputs[i], dim=0)
+    p[0] = p[0] * 1.6
+    p[2] = p[2] * 30
+    p[3] = p[3] * 30
+    p = p / p.sum(dim=0)
+    p = torch.where(p > 0.85, torch.full_like(p, 1000), p)
     for j in range(4):
-        chart_temp[i][j]=torch.multinomial(p[:,j],1,replacement=True)
-    # chart_temp[i] = torch.argmax(outputs[i], dim=0)
-
-torch.set_printoptions(profile="full")
-# print(chart_temp)
+        chart_temp[i][j] = torch.multinomial(p[:, j], 1, replacement=True)
 
 
 def beatindex2note(index):
@@ -118,4 +118,9 @@ chart["extra"] = {"test": {"divide": 4, "speed": 100,
 
 with open("AIchart.mc", "w", encoding="utf-8") as f:
     json.dump(chart, f)
+
+zip_file = zipfile.ZipFile(os.path.splitext(
+    args.audio_path)[-2] + "_AIchart.mcz", "w")
+zip_file.write('AIchart.mc', compress_type=zipfile.ZIP_DEFLATED)
+zip_file.write(args.audio_path, compress_type=zipfile.ZIP_DEFLATED)
 print(f"generating successfully! ")
