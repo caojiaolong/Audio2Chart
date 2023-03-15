@@ -12,10 +12,10 @@ from model import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = ChartNet(600, 500, 512, 2, 16).to(device)
 model.eval()
-model.load_state_dict(torch.load('checkpoints/e_10.pth', map_location=device))
+model.load_state_dict(torch.load('checkpoints/e_9.pth', map_location=device))
 
 
-audio_path = "canon.flac"
+audio_path = "Mujinku.ogg"
 # read the audio and compute the mel spectrogram
 try:
     y, sr = librosa.load(audio_path)
@@ -75,10 +75,19 @@ for i in range(beat_num):
     # chart_temp[i][1] = int(outputs[i] / 4) % 4
     # chart_temp[i][2] = int(outputs[i] / 16) % 4
     # chart_temp[i][3] = int(outputs[i] / 64) % 4
-    chart_temp[i] = torch.argmax(outputs[i], dim=0)
+    p=torch.softmax(outputs[i],dim=0)
+    p[0]=p[0]*1.6
+    p[2]=p[2]*30
+    p[3]=p[3]*30
+    p=p/p.sum(dim=0)
+    p=torch.where(p>0.85,torch.full_like(p,1000),p)
+    if i==0:print(p)
+    for j in range(4):
+        chart_temp[i][j]=torch.multinomial(p[:,j],1,replacement=True)
+    # chart_temp[i] = torch.argmax(outputs[i], dim=0)
 
 torch.set_printoptions(profile="full")
-print(chart_temp)
+# print(chart_temp)
 
 
 def beatindex2note(index):
